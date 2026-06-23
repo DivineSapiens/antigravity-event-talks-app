@@ -61,7 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Data Fetching
     // ==========================================================================
     async function fetchNotes() {
-        showLoading(true);
+        const hasCache = releaseNotes.length > 0;
+        const offlineBanner = document.getElementById('offlineBanner');
+        
+        if (!hasCache) {
+            showLoading(true);
+        }
+        
         refreshSpinner.classList.add('spinning');
         refreshBtn.disabled = true;
 
@@ -71,19 +77,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.success) {
                 releaseNotes = data.notes;
+                
+                // Save to Cache
+                localStorage.setItem('bq_release_notes', JSON.stringify(data.notes));
+                localStorage.setItem('bq_release_notes_time', new Date().toISOString());
+                if (offlineBanner) offlineBanner.classList.add('hidden');
+                
                 updateStats(releaseNotes);
                 renderFeed();
                 showError(false);
             } else {
-                showError(true, 'Failed to Parse Notes', data.error || 'Unknown error occurred while parsing the BigQuery RSS feed.');
+                if (hasCache) {
+                    showOfflineBanner();
+                    showToast('Could not sync latest notes. Displaying cached version.');
+                } else {
+                    showError(true, 'Failed to Parse Notes', data.error || 'Unknown error occurred while parsing the BigQuery RSS feed.');
+                }
             }
         } catch (err) {
-            showError(true, 'Network Error', 'Failed to connect to the backend server. Make sure the Flask application is running.');
+            if (hasCache) {
+                showOfflineBanner();
+                showToast('Network offline. Showing cached release notes.');
+            } else {
+                showError(true, 'Network Error', 'Failed to connect to the backend server. Make sure the Flask application is running.');
+            }
             console.error('Error fetching release notes:', err);
         } finally {
             showLoading(false);
             refreshSpinner.classList.remove('spinning');
             refreshBtn.disabled = false;
+        }
+    }
+
+    function showOfflineBanner() {
+        const offlineBanner = document.getElementById('offlineBanner');
+        const offlineBannerText = document.getElementById('offlineBannerText');
+        const cacheTime = localStorage.getItem('bq_release_notes_time');
+        
+        if (offlineBanner && cacheTime) {
+            const formattedTime = new Date(cacheTime).toLocaleString();
+            if (offlineBannerText) {
+                offlineBannerText.innerHTML = `Offline Mode: Showing cached release notes synced on <strong>${formattedTime}</strong>.`;
+            }
+            offlineBanner.classList.remove('hidden');
         }
     }
 
@@ -174,6 +210,27 @@ document.addEventListener('DOMContentLoaded', () => {
             return catMatch && searchMatch;
         });
 
+        // Update filter context summary badge
+        const filterSummary = document.getElementById('filterSummary');
+        const filterSummaryText = document.getElementById('filterSummaryText');
+        
+        if (activeCategory !== 'all' || searchQuery.trim() !== '') {
+            if (filterSummary) {
+                filterSummary.classList.remove('hidden');
+                let summaryStr = `Showing <strong>${filteredNotes.length}</strong> updates`;
+                if (activeCategory !== 'all') {
+                    summaryStr += ` in <strong>${activeCategory}s</strong>`;
+                }
+                if (searchQuery.trim() !== '') {
+                    summaryStr += ` matching "<strong>${searchQuery}</strong>"`;
+                }
+                summaryStr += ` (out of ${releaseNotes.length} total)`;
+                if (filterSummaryText) filterSummaryText.innerHTML = summaryStr;
+            }
+        } else {
+            if (filterSummary) filterSummary.classList.add('hidden');
+        }
+
         if (filteredNotes.length === 0) {
             feedContainer.classList.add('hidden');
             emptyState.classList.remove('hidden');
@@ -233,6 +290,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (note) {
                     const formattedText = `BigQuery Release Note (${note.date})\nType: ${note.type}\n\n${note.text_content}\n\nSource: ${note.link}`;
                     copyToClipboard(formattedText);
+                    
+                    // UX Improvement: Button state morphing to Copied!
+                    const originalHTML = btn.innerHTML;
+                    btn.classList.add('copied');
+                    btn.innerHTML = `
+                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="var(--color-feature)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span style="color: var(--color-feature);">Copied!</span>
+                    `;
+                    btn.disabled = true;
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.classList.remove('copied');
+                        btn.disabled = false;
+                    }, 2000);
+
                     showToast('Release note copied to clipboard!');
                 }
             });
@@ -311,17 +384,25 @@ document.addEventListener('DOMContentLoaded', () => {
         renderFeed();
     });
 
-    resetFiltersBtn.addEventListener('click', () => {
+    function resetFilters() {
         searchInput.value = '';
         searchQuery = '';
         clearSearch.style.display = 'none';
         
         document.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
-        document.querySelector('.filter-pill[data-category="all"]').classList.add('active');
+        const allPill = document.querySelector('.filter-pill[data-category="all"]');
+        if (allPill) allPill.classList.add('active');
         activeCategory = 'all';
         
         renderFeed();
-    });
+    }
+
+    resetFiltersBtn.addEventListener('click', resetFilters);
+
+    const clearFiltersLink = document.getElementById('clearFiltersLink');
+    if (clearFiltersLink) {
+        clearFiltersLink.addEventListener('click', resetFilters);
+    }
 
     refreshBtn.addEventListener('click', () => {
         fetchNotes().then(() => showToast('Release notes updated!'));
@@ -557,6 +638,32 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Opened Twitter composer tab!');
     });
 
-    // Initialize Page
+    // Initialize Page (with Cache bootstrap)
+    const cachedData = localStorage.getItem('bq_release_notes');
+    if (cachedData) {
+        try {
+            releaseNotes = JSON.parse(cachedData);
+            updateStats(releaseNotes);
+            renderFeed();
+        } catch (e) {
+            console.error('Error reading cached notes:', e);
+        }
+    }
+
+    // Scroll to top floating button logic
+    const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+    if (scrollToTopBtn) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.classList.remove('hidden');
+            } else {
+                scrollToTopBtn.classList.add('hidden');
+            }
+        });
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
     fetchNotes();
 });

@@ -75,6 +75,12 @@
             </div>
         </header>
 
+        <!-- Offline Cache Banner (Hidden by default) -->
+        <div id="offlineBanner" class="offline-banner hidden">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.5M5 12.5a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/></svg>
+            <span id="offlineBannerText">Offline Mode: Showing cached release notes.</span>
+        </div>
+
         <!-- Stats Bar -->
         <section class="stats-bar card">
             <div class="stat-item">
@@ -113,6 +119,11 @@
                     <button class="filter-pill" data-category="Issue">Issues</button>
                     <button class="filter-pill" data-category="Fix">Fixes</button>
                 </div>
+            </div>
+            
+            <div id="filterSummary" class="filter-summary hidden">
+                <span id="filterSummaryText"></span>
+                <button id="clearFiltersLink" class="clear-filters-link">Clear All</button>
             </div>
         </section>
 
@@ -227,6 +238,11 @@
     <div id="toastNotification" class="toast hidden">
         <span id="toastMessage">Success</span>
     </div>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTopBtn" class="scroll-to-top hidden" title="Scroll to top" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
 
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
