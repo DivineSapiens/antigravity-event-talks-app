@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const refreshBtn = document.getElementById('refreshBtn');
     const refreshSpinner = document.getElementById('refreshSpinner');
-    const themeToggle = document.getElementById('themeToggle');
+    const themeCheckbox = document.getElementById('themeCheckbox');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
     const retryBtn = document.getElementById('retryBtn');
     
     const searchInput = document.getElementById('searchInput');
@@ -46,14 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
-
-    themeToggle.addEventListener('click', () => {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        showToast(`Switched to ${newTheme} mode`);
-    });
+    if (themeCheckbox) {
+        themeCheckbox.checked = savedTheme === 'dark';
+        themeCheckbox.addEventListener('change', (e) => {
+            const newTheme = e.target.checked ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            showToast(`Switched to ${newTheme} mode`);
+        });
+    }
 
     // ==========================================================================
     // Data Fetching
@@ -203,9 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${note.html_content}
                 </div>
                 <div class="card-actions">
-                    <button class="card-action-btn copy-txt-btn" data-id="${note.id}">
+                    <button class="card-action-btn copy-clip-btn" data-id="${note.id}">
                         <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                        <span>Copy Text</span>
+                        <span>Copy to Clipboard</span>
                     </button>
                     <button class="card-action-btn copy-link-btn" data-link="${note.link}">
                         <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" x2="15" y1="15" y2="9"/><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
@@ -224,13 +226,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Attach Card Button Event Listeners
-        document.querySelectorAll('.copy-txt-btn').forEach(btn => {
+        document.querySelectorAll('.copy-clip-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const noteId = btn.getAttribute('data-id');
                 const note = releaseNotes.find(n => n.id === noteId);
                 if (note) {
-                    copyToClipboard(note.text_content);
-                    showToast('Release note text copied!');
+                    const formattedText = `BigQuery Release Note (${note.date})\nType: ${note.type}\n\n${note.text_content}\n\nSource: ${note.link}`;
+                    copyToClipboard(formattedText);
+                    showToast('Release note copied to clipboard!');
                 }
             });
         });
@@ -327,6 +330,56 @@ document.addEventListener('DOMContentLoaded', () => {
     retryBtn.addEventListener('click', () => {
         fetchNotes();
     });
+
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', () => {
+            exportToCSV();
+        });
+    }
+
+    function exportToCSV() {
+        const filteredNotes = releaseNotes.filter(note => {
+            // Category check
+            let catMatch = activeCategory === 'all' || note.type.toLowerCase() === activeCategory.toLowerCase();
+            
+            // Search query check
+            let searchMatch = !searchQuery || 
+                note.date.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                note.type.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                note.text_content.toLowerCase().includes(searchQuery.toLowerCase());
+                
+            return catMatch && searchMatch;
+        });
+        
+        if (filteredNotes.length === 0) {
+            showToast('No notes available to export.');
+            return;
+        }
+        
+        // Build CSV
+        let csvContent = "\ufeffDate,Type,Link,Content\n"; // Add BOM for Excel compatibility
+        filteredNotes.forEach(note => {
+            const cleanText = note.text_content.replace(/"/g, '""').trim();
+            const cleanDate = note.date.replace(/"/g, '""');
+            const cleanType = note.type.replace(/"/g, '""');
+            const cleanLink = note.link.replace(/"/g, '""');
+            
+            csvContent += `"${cleanDate}","${cleanType}","${cleanLink}","${cleanText}"\n`;
+        });
+        
+        // Trigger download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `bigquery_release_notes_${activeCategory}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast(`Exported ${filteredNotes.length} notes to CSV!`);
+    }
 
     // ==========================================================================
     // Tweet Composer Modal Logic

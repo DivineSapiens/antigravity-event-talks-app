@@ -384,11 +384,88 @@ input, button, textarea {
     100% { transform: rotate(-360deg); }
 }
 
-/* Theme Switcher specific icon handling */
-.sun-icon { display: none; }
-.moon-icon { display: block; }
-[data-theme="light"] .sun-icon { display: block; }
-[data-theme="light"] .moon-icon { display: none; }
+/* Theme Switcher Toggle Switch */
+.theme-switch-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    height: 44px;
+    transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+}
+
+.theme-switch-wrapper:hover {
+    background-color: var(--bg-glass-hover);
+    border-color: var(--border-glass-focus);
+}
+
+.theme-switch {
+    display: inline-block;
+    height: 20px;
+    position: relative;
+    width: 40px;
+}
+
+.theme-switch input {
+    display: none;
+}
+
+.slider {
+    background-color: var(--scrollbar-thumb);
+    bottom: 0;
+    cursor: pointer;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: .3s var(--transition-bounce);
+}
+
+.slider:before {
+    background-color: #ffffff;
+    bottom: 3px;
+    content: "";
+    height: 14px;
+    left: 3px;
+    position: absolute;
+    transition: .3s var(--transition-bounce);
+    width: 14px;
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.theme-switch input:checked + .slider {
+    background: var(--accent-gradient);
+}
+
+.theme-switch input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.sun-icon-inline, .moon-icon-inline {
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    transition: color var(--transition-speed) ease;
+}
+
+/* Color highlighting based on checked state of checkbox */
+[data-theme="light"] .sun-icon-inline {
+    color: #f59e0b; /* Amber */
+}
+
+[data-theme="dark"] .moon-icon-inline {
+    color: #818cf8; /* Indigo */
+}
 
 /* ==========================================================================
    Stats Bar
