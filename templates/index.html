@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Pulse</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans for Headers, Inter for Body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Background Elements for Premium Glow Effect -->
+    <div class="glow-bg-container">
+        <div class="glow-sphere glow-1"></div>
+        <div class="glow-sphere glow-2"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo-section">
+                <div class="logo-wrapper">
+                    <!-- Custom SVG Logo resembling database/bigquery and waves -->
+                    <svg class="app-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 21C16.9706 21 21 17.866 21 14C21 10.134 16.9706 7 12 7C7.02944 7 3 10.134 3 14C3 17.866 7.02944 21 12 21Z" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 17C15.3137 17 18 14.7614 18 12C18 9.23858 15.3137 7 12 7C8.68629 7 6 9.23858 6 12C6 14.7614 8.68629 17 12 17Z" stroke="url(#logoGrad2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" fill="url(#logoGrad)"/>
+                        <path d="M12 2V7" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M12 21V23" stroke="url(#logoGrad2)" stroke-width="2" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="3" y1="2" x2="21" y2="23" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#38bdf8"/>
+                                <stop offset="1" stop-color="#818cf8"/>
+                            </linearGradient>
+                            <linearGradient id="logoGrad2" x1="21" y1="2" x2="3" y2="23" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#fbbf24"/>
+                                <stop offset="1" stop-color="#f43f5e"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="title-meta">
+                    <h1>BigQuery Release Pulse</h1>
+                    <p>Track, filter, and share Google BigQuery updates instantly</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <!-- Theme Switcher -->
+                <button id="themeToggle" class="icon-button" title="Toggle Light/Dark Mode" aria-label="Toggle Theme">
+                    <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                </button>
+                
+                <!-- Refresh Button with Spinner -->
+                <button id="refreshBtn" class="primary-button flex-btn">
+                    <svg id="refreshSpinner" class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8m0 0H15m6 0V2m-3 10a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16m0 0h6m-6 0v6"/></svg>
+                    <span>Refresh Notes</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Bar -->
+        <section class="stats-bar card">
+            <div class="stat-item">
+                <span class="stat-num" id="totalUpdates">0</span>
+                <span class="stat-label">Total Updates</span>
+            </div>
+            <div class="stat-item border-left">
+                <span class="stat-num" id="featureCount">0</span>
+                <span class="stat-label">Features</span>
+            </div>
+            <div class="stat-item border-left">
+                <span class="stat-num" id="changeCount">0</span>
+                <span class="stat-label">Changes & Fixes</span>
+            </div>
+            <div class="stat-item border-left">
+                <span class="stat-num" id="noticeCount">0</span>
+                <span class="stat-label">Announcements</span>
+            </div>
+        </section>
+
+        <!-- Search & Filtering Controls -->
+        <section class="controls-section card">
+            <div class="search-wrapper">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" id="searchInput" placeholder="Search update content, dates, keywords..." aria-label="Search release notes">
+                <button id="clearSearch" class="clear-btn" style="display: none;">&times;</button>
+            </div>
+            
+            <div class="filters-scroll-wrapper">
+                <div class="filters-container" id="categoryFilters">
+                    <button class="filter-pill active" data-category="all">All Updates</button>
+                    <button class="filter-pill" data-category="Feature">Features</button>
+                    <button class="filter-pill" data-category="Change">Changes</button>
+                    <button class="filter-pill" data-category="Announcement">Announcements</button>
+                    <button class="filter-pill" data-category="Deprecation">Deprecations</button>
+                    <button class="filter-pill" data-category="Issue">Issues</button>
+                    <button class="filter-pill" data-category="Fix">Fixes</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="state-container">
+            <div class="pulsing-loader"></div>
+            <p>Fetching the latest BigQuery release notes...</p>
+        </div>
+
+        <!-- Empty / Error State -->
+        <div id="errorState" class="state-container hidden">
+            <svg class="state-icon error-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+            <h3 id="errorTitle">Oops! Something went wrong</h3>
+            <p id="errorMessage">We couldn't connect to the BigQuery feeds API. Please try again later.</p>
+            <button id="retryBtn" class="secondary-button mt-4">Try Again</button>
+        </div>
+
+        <div id="emptyState" class="state-container hidden">
+            <svg class="state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <h3>No results found</h3>
+            <p>Try refining your search terms or category filters.</p>
+            <button id="resetFiltersBtn" class="secondary-button mt-4">Reset Filters</button>
+        </div>
+
+        <!-- Release Notes Feed -->
+        <main class="feed-container" id="feedContainer">
+            <!-- Cards will be dynamically injected here -->
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer-bar">
+            <p>© 2026 BigQuery Release Pulse • Data sourced from Google Cloud Platform Feeds</p>
+        </footer>
+    </div>
+
+    <!-- TWEET COMPOSER MODAL (GLASSMORPHIC) -->
+    <div id="tweetModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-card">
+            <!-- Header -->
+            <div class="modal-header">
+                <h3 id="modalTitle">Compose Tweet</h3>
+                <button id="closeModal" class="modal-close-btn" aria-label="Close dialog">&times;</button>
+            </div>
+            
+            <!-- Body -->
+            <div class="modal-body">
+                <!-- Mock Twitter Card Preview -->
+                <div class="tweet-preview-card">
+                    <div class="tweet-user-info">
+                        <div class="tweet-avatar">BQ</div>
+                        <div class="tweet-names">
+                            <span class="display-name">BigQuery Release Pulse</span>
+                            <span class="username">@BQReleasePulse</span>
+                        </div>
+                        <!-- Verified Badge Mock -->
+                        <svg class="verified-badge" viewBox="0 0 24 24" fill="#1d9bf0">
+                            <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.99-3.818-3.99-.48 0-.94.1-1.348.27C14.825 2.515 13.512 1.5 12 1.5s-2.825 1.015-3.422 2.28c-.407-.17-.867-.27-1.348-.27-2.108 0-3.818 1.78-3.818 3.99 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.58.875 2.95 2.148 3.6-.154.435-.238.905-.238 1.4 0 2.21 1.71 3.99 3.818 3.99.48 0 .94-.1 1.348-.27.597 1.265 1.91 2.28 3.422 2.28s2.825-1.015 3.422-2.28c.407.17.867.27 1.348.27 2.108 0 3.818-1.78 3.818-3.99 0-.495-.084-.965-.238-1.4 1.273-.65 2.148-2.02 2.148-3.6zm-12.72 3.23-3.62-3.62 1.35-1.35 2.27 2.27 5.68-5.68 1.35 1.35-7.03 7.03z"/>
+                        </svg>
+                    </div>
+                    
+                    <!-- Composer Textarea -->
+                    <div class="tweet-composer-wrapper">
+                        <textarea id="tweetContent" rows="6" placeholder="What's happening?"></textarea>
+                    </div>
+                    
+                    <div class="tweet-divider"></div>
+                    
+                    <div class="tweet-preview-meta">
+                        <!-- Progress counter & options -->
+                        <div class="tweet-stats">
+                            <span class="char-count-wrapper">
+                                <svg class="progress-ring" width="28" height="28">
+                                    <circle class="progress-ring__background" stroke="#2f3336" stroke-width="2" fill="transparent" r="10" cx="14" cy="14"/>
+                                    <circle class="progress-ring__circle" stroke="#1d9bf0" stroke-width="2.5" fill="transparent" r="10" cx="14" cy="14"/>
+                                </svg>
+                                <span id="charCount">280</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hastags Recommendations -->
+                <div class="hashtags-section">
+                    <label>Tap to add hashtags:</label>
+                    <div class="hashtags-pool">
+                        <span class="hashtag-tag" data-tag="#BigQuery">#BigQuery</span>
+                        <span class="hashtag-tag" data-tag="#GoogleCloud">#GoogleCloud</span>
+                        <span class="hashtag-tag" data-tag="#GCP">#GCP</span>
+                        <span class="hashtag-tag" data-tag="#DataAnalytics">#DataAnalytics</span>
+                        <span class="hashtag-tag" data-tag="#DataEngineering">#DataEngineering</span>
+                        <span class="hashtag-tag" data-tag="#SQL">#SQL</span>
+                        <span class="hashtag-tag" data-tag="#AI">#AI</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="modal-footer">
+                <button id="cancelTweet" class="tertiary-button">Cancel</button>
+                <button id="publishTweetBtn" class="tweet-action-btn flex-btn">
+                    <!-- Twitter SVG Icon -->
+                    <svg class="tweet-btn-logo" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    <span>Post on X / Twitter</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toastNotification" class="toast hidden">
+        <span id="toastMessage">Success</span>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
